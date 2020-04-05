@@ -22,7 +22,7 @@ class PosmsSink(OutboundSink):
                     'API_KEY': self.config["settings"]["api_key"],
                     'DEV_ID': self.device_info.get("id", "unknown_id"), 
                     'DEV_TYPE': self.device_info.get("type", "unknown_type"),
-                    'DEV_MSG': 'Error/Status unavailable or finger out',
+                    'DEV_MSG': 'Error/Status unavailable, device off, or finger out',
                     'DEV_LOC': self.device_info.get("location", "unknown_location"),
                     'RECORD_TIME': datetime.datetime.now(),
                     'O2_VAL': ERROR_UNSET,
@@ -51,6 +51,7 @@ class PosmsSink(OutboundSink):
             except Exception as e:
                 _logger.exception("Error in PosmsSink")
 
-            time.sleep(1.0 / self.config["settings"]["rate"])
+            if not self.stop_thread:
+                time.sleep(1.0 / self.config["settings"]["rate"])
 
         _logger.warning('PosmsSink terminated')
