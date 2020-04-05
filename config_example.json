@@ -4,9 +4,9 @@
 		"level": "debug"
 	},
 	"info": {
-		"id": "test",
-		"type": "test",
-		"location": "test"
+		"id": "auto",
+		"type": "auto",
+		"location": "auto"
 	},
 	"inbounds": [
 		{

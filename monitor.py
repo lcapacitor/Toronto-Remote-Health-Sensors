@@ -7,6 +7,7 @@ import argparse
 import logging
 import time
 import signal
+import socket
 
 _logger = logging.getLogger(__name__)
 
@@ -26,6 +27,13 @@ def main(argv):
 
     with open(args.config) as f:
         config = json.load(f)
+
+    if "info" in config:
+        if config["info"].get("id", "auto") == "auto":
+            config["info"]["id"] = socket.gethostname()
+        if config["info"].get("location", "auto") == "auto":
+            config["info"]["location"] = socket.gethostbyname(socket.gethostname())
+
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
