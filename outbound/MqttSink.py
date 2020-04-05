@@ -21,8 +21,16 @@ class MqttSink(OutboundSink):
                 client.connect(self.config["location"], 
                                self.config["settings"]["port"], 60)
 
+                for key, val in self.device_info.items():
+                    topic = (self.config["settings"]["topic_prefix"] + 
+                             self.device_info.get("id", "unknown") + '/' + 
+                             key)
+                    ret = client.publish(topic, val)
+                    _logger.debug("Published: %s: %s -> %s", topic, val, ret)
+
                 while not self.stop_thread:             
                     for key, que in self.inputs.items():
+                        val = -1
                         if not que.empty():
                             while not que.empty():
                                 val = que.get() # Only sent last value in queue
@@ -36,6 +44,19 @@ class MqttSink(OutboundSink):
                 client.disconnect()
             except Exception as e:
                 _logger.exception("MQTT unexpected exception")
+
+                topic = (self.config["settings"]["topic_prefix"] + 
+                         self.device_info.get("id", "unknown") + '/error')
+                val = str(e)
+                ret = client.publish(topic, val)
+                _logger.debug("Published: %s: %s -> %s", topic, val, ret)
+
+                topic = (self.config["settings"]["topic_prefix"] + 
+                         self.device_info.get("id", "unknown") + '/status')
+                val = "Error/MQTT error state"
+                ret = client.publish(topic, val)
+                _logger.debug("Published: %s: %s -> %s", topic, val, ret)
+
                 client.disconnect()
 
 def main():
