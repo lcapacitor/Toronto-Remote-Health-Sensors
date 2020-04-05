@@ -8,6 +8,7 @@ import logging
 import time
 import signal
 import socket
+import uuid
 
 _logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ def main(argv):
 
     if "info" in config:
         if config["info"].get("id", "auto") == "auto":
-            config["info"]["id"] = socket.gethostname()
+            config["info"]["id"] = socket.gethostname() + '-' + hex(uuid.getnode())
         if config["info"].get("location", "auto") == "auto":
             config["info"]["location"] = socket.gethostbyname(socket.gethostname())
 
