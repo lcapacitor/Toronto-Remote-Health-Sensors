@@ -1,5 +1,6 @@
 import inbound.RandomSource
 import inbound.Cms50ewSource
+import inbound.MasimoSource
 import outbound.PosmsSink
 import outbound.MqttSink
 import outbound.StdoutSink
@@ -18,7 +19,8 @@ _logger = logging.getLogger(__name__)
 
 INBOUND_CLASS_MAP = {
     'randomgenerator': inbound.RandomSource.RandomSource,
-    'serial-cms50ew': inbound.Cms50ewSource.Cms50ewSource
+    'serial-cms50ew': inbound.Cms50ewSource.Cms50ewSource,
+    'serial-masimorad': inbound.MasimoSource.MasimoRadSource
 }
 
 OUTBOUND_CLASS_MAP = {
@@ -60,7 +62,6 @@ def main(argv):
         if config["info"].get("location", "auto") == "auto":
             config["info"]["location"] = socket.gethostbyname(socket.gethostname())
 
-
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     log_config = config.get("log", {})
@@ -77,7 +78,7 @@ def main(argv):
         
     _logger.info("Configuration parsed")
 
-
+    # Initialize in and out bound objetcs if they are marked as active
     inbound_objs = {
         inbound_config["tag"] : 
         INBOUND_CLASS_MAP[inbound_config["protocol"]](inbound_config)
@@ -92,6 +93,7 @@ def main(argv):
         if outbound_config["active"]
     }
 
+    # Establish connections: currently only "fan out" is supported
     if "connections" not in config or len(config["connections"]) == 0:
         _logger.error("No connection specified in configuration to establish")
         return
@@ -100,21 +102,21 @@ def main(argv):
     for connection_config in config["connections"]:
         sources = [inbound_objs[key] for key in connection_config["inbound"]]
         sinks = [outbound_objs[key] for key in connection_config["outbound"]]
-        for s in sinks:
-            s.device_info = config.get("info", {})
-        # outbound_obj.inputs = inbound_obj.outputs
         conn = Connection(connection_config)
         conn.sources = sources
         conn.sinks = sinks
         connections.append(conn)
 
+    # Start connection, source, and sink threads
     for conn in connections:
         conn.start()
     for key, obj in inbound_objs.items():
         obj.start()
     for key, obj in outbound_objs.items():
+        obj.device_info = config.get("info", {})
         obj.start()
 
+    # Handle Control-C exit
     # https://stackoverflow.com/a/31464349/6610243
     killed = [False]
     def exit_gracefully(signum, frame):
@@ -128,18 +130,20 @@ def main(argv):
         for key, obj in outbound_objs.items():
             _logger.warning("Terminating %s", obj)
             obj.stop_thread = True
-        for conn in connections:
-            conn.join()
-        for key, obj in inbound_objs.items():
-            obj.join()
-        for key, obj in outbound_objs.items():
-            obj.join()
 
     signal.signal(signal.SIGINT, exit_gracefully)
     signal.signal(signal.SIGTERM, exit_gracefully)
 
+    # Loop main thread to wait for KeyboardInterrupt
     while not killed[0]:
         time.sleep(1e-3)
+
+    for conn in connections:
+        conn.join()
+    for key, obj in inbound_objs.items():
+        obj.join()
+    for key, obj in outbound_objs.items():
+        obj.join()
 
     _logger.warning("Main program terminated")
 

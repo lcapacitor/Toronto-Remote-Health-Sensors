@@ -101,7 +101,7 @@ class MasimoRadSource(InboundSource):
 
                     self.outputs["spo2"].put(oxi.spo2)
                     self.outputs["hr"].put(oxi.beat_per_minute)
-                    self.outputs["status"].put(oxi.spo2)
+                    self.outputs["status"].put("Normal/Proessing data")
 
             except Exception as e:
                 _logger.exception("Error in MasimoRadSource. Wait for retry.")
