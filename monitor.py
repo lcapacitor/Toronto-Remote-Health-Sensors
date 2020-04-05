@@ -21,6 +21,22 @@ OUTBOUND_CLASS_MAP = {
     'http-post-posms': outbound.PosmsSink.PosmsSink
 }
 
+def getserial():
+    '''
+    https://raspberrypi.stackexchange.com/a/2087
+    '''
+    # Extract serial from cpuinfo file
+    cpuserial = "0000000000000000"
+    try:
+        f = open('/proc/cpuinfo','r')
+        for line in f:
+            if line[0:6]=='Serial':
+                cpuserial = line[10:26]
+        f.close()
+    except:
+        cpuserial = "ERROR000000000"
+    return cpuserial
+
 def main(argv):
     parser = argparse.ArgumentParser(description='Take data source as inbounds and send to services as outbounds.')
     parser.add_argument('config', help='configuration file (.json)')
@@ -31,7 +47,10 @@ def main(argv):
 
     if "info" in config:
         if config["info"].get("id", "auto") == "auto":
-            config["info"]["id"] = socket.gethostname() + '-' + hex(uuid.getnode())
+            if platform.system() == 'Windows'
+                config["info"]["id"] = socket.gethostname() + '-' + hex(uuid.getnode()) # This changes everytime Raspberry Pi reboots...
+            else:
+                config["info"]["id"] = socket.gethostname() + '-' + getserial()
         if config["info"].get("location", "auto") == "auto":
             config["info"]["location"] = socket.gethostbyname(socket.gethostname())
 
