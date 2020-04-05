@@ -247,7 +247,10 @@ class CMS50EW():
         if self.is_bluetooth:
             self.btsock.close()
         else:
-            self.ser.close()
+            if hasattr(self, 'ser'):
+                self.ser.close()
+            else:
+                print('Closing device without opening serial')
     
     def plot_pygal(self, live=False):
         """Plots stored session data as Pygal line chart."""

@@ -22,39 +22,58 @@ class Cms50ewSource(InboundSource):
         _logger.info("Starting CMS50EWSource thread")
         self.no_data('Warning/Initializing...', finger='N')
 
-        oxi = cms50ew.CMS50EW()
-        self.oxi = oxi
+        oxi = None
 
-        success = False
-        while not success and not self.stop_thread:
-            # TODO: auto serial port detection
+        while not self.stop_thread:
+            # The CMS50E comes with an active cable that also acts as a serial UART to USB converter
+            # Therefore unplugging the USB-A end and the USB-mini end has different behaviors
+            # When the USB-A end is unplugged, the serial port disappearts on system
+            # When the USB-mini end is unplugged, the serial port still exists but (presumably) has no data
+            # Also, when the CMS50E does not have an active connection or is on battery 
+            # and dies not detect finger, it turns itself off 
+
+            if oxi is not None:
+                oxi.close_device()
+
+            oxi = cms50ew.CMS50EW()
+
+            # Serial port initialization start
+            # success = False
+            # while not success and not self.stop_thread:
+                # TODO: auto serial port detection
             port_location = self.config["location"]
             try:
+                # It seems success can only be False when bluetooth failed, 
+                # otherwise if serial failed it throws Exception
                 success = oxi.setup_device(target=port_location, is_bluetooth=False)
             except Exception as e:
                 _logger.exception("Cannot initialize CMS50EW on %s", port_location)
                 success = False
+
             # TODO: verify this is working, or maybe another instance needs to be initialized
+            # It seems to work
             if not success:
                 _logger.error("Cannot initialize CMS50EW on %s", port_location)
                 self.no_data('Error/Sensor (%s) connection error, '
-                             'try reconnect or reboot system if keep failing' % port_location, 
+                             'try reconnect or reboot system if persists' % port_location, 
                              finger='N')
+                oxi.close_device() # Not sure if this is necessary
                 time.sleep(3)
+                continue # Go to next loop
             else:
                 _logger.info("Initialize CMS50EW on %s success", port_location)
+            # Serial port initialization end
 
-        oxi.old_pulse_rate = -1
-        oxi.old_spo2 = -1
-        oxi.old_status = 'No status'
+            oxi.old_pulse_rate = -1
+            oxi.old_spo2 = -1
+            oxi.old_status = 'No status'
 
-        oxi.starttime = time.time()
-
-        while not self.stop_thread:
-            oxi.initiate_device()
-            oxi.send_cmd(oxi.cmd_get_live_data)
-
+            oxi.starttime = time.time()
+            # _logger.debug("Entering main CMS50EW data loop")
             try:
+                oxi.initiate_device()
+                oxi.send_cmd(oxi.cmd_get_live_data)
+
                 # update_live_data()
                 finger_out = False
                 low_signal_quality = False
@@ -62,6 +81,7 @@ class Cms50ewSource(InboundSource):
                 counter = 0
                 
                 while not self.stop_thread:
+                    # _logger.debug("Entering main CMS50EW process data loop")
                     data = oxi.process_data()
                     finger = data[0]
                     pulse_rate = data[1]
@@ -98,13 +118,19 @@ class Cms50ewSource(InboundSource):
 
 
 
-            except (TypeError, bluetooth.btcommon.BluetoothError) as e:
-                _logger.exception("Error in Cms50ewSource")
+            except Exception as e:
+                _logger.exception("Error in Cms50ewSource. Wait for retry.")
+                self.no_data('Error/Cannot communicate with sensor, '
+                             'try reconnect or reboot system if persists', 'N')
+                oxi.close_device()
+                time.sleep(3)
 
             # for stream in self.config["settings"]["randomstreams"]:
             #     que = self.outputs[stream["name"]]
             #     que.put(rng.randint(80,100))
             time.sleep(0.3) # TODO: Implement variable rate
+
+        oxi.close_device()
 
         _logger.warning('CMS50EWSource terminated')
 
@@ -118,3 +144,33 @@ class Cms50ewSource(InboundSource):
         self.outputs["hr"].put(pulse_rate)
         self.outputs["status"].put(status)
 
+def main():
+    logging.basicConfig(level=logging.DEBUG)
+
+    config = {
+        "protocol": "serial-cms50ew",
+        "location": "COM3",
+        "settings": {},
+        "tag": "ToronTek"
+    }
+
+    source = Cms50ewSource(config)
+    source.start()
+
+    try:
+        while source.is_alive():
+            for key, que in source.outputs.items():
+                print('%s(n=%d)' % (key, que.qsize()), end=':\t')
+                val = None
+                while not que.empty():
+                    val = que.get()
+                print(val, end=',')
+                print()
+            print()
+            time.sleep(1)
+    except KeyboardInterrupt:
+        source.stop_thread = True
+        source.join()
+
+if __name__ == '__main__':
+    main()
