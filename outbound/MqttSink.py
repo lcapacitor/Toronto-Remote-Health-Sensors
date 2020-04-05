@@ -2,6 +2,7 @@ from .OutboundSink import OutboundSink
 import time
 import paho.mqtt.client as mqtt
 import logging
+import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -28,7 +29,12 @@ class MqttSink(OutboundSink):
                     ret = client.publish(topic, val)
                     _logger.debug("Published: %s: %s -> %s", topic, val, ret)
 
-                while not self.stop_thread:             
+                while not self.stop_thread:
+
+                    topic = (self.config["settings"]["topic_prefix"] + 
+                             self.device_info.get("id", "unknown") + '/ping')
+                    ret = client.publish(topic, datetime.datetime.now().isoformat())
+
                     for key, que in self.inputs.items():
                         val = -1
                         if not que.empty():
