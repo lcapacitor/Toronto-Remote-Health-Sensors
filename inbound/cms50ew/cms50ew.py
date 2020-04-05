@@ -244,13 +244,15 @@ class CMS50EW():
     
     def close_device(self):
         """Closes device socket"""
-        if self.is_bluetooth:
-            self.btsock.close()
+        if hasattr(self, 'btsock') and self.btsock is not None:
+            self.btsock.close()    
         else:
-            if hasattr(self, 'ser'):
-                self.ser.close()
-            else:
-                print('Closing device without opening serial')
+            print('Closing device without opening bluetooth')
+
+        if hasattr(self, 'ser') and self.ser is not None:
+            self.ser.close()    
+        else:
+            print('Closing device without opening serial')
     
     def plot_pygal(self, live=False):
         """Plots stored session data as Pygal line chart."""
@@ -356,12 +358,13 @@ class CMS50EW():
         
 class DeviceScan():
     """Scans for serial or Bluetooth devices."""
-    def __init__(self, is_bluetooth=False):
+    def __init__(self, is_bluetooth=False, serial_glob='/dev/tty[A-Za-z]*'):
         if is_bluetooth:
             self.devices_dict = {}
             self.get_bt_devices()
         else:
             self.accessible_ports = []
+            self.serial_glob = serial_glob
             self.get_serial_ports()
 
     def get_bt_devices(self):
@@ -378,8 +381,8 @@ class DeviceScan():
         """
         Tries to access serial ports and returns them as a list if successful.
         """
-        available_ports = glob.glob('/dev/tty[A-Za-z]*')
-    
+        available_ports = glob.glob(self.serial_glob)
+
         for port in available_ports:
             try:
                 s = serial.Serial(port)

@@ -4,6 +4,8 @@ import time
 import logging
 import random
 from .cms50ew import cms50ew
+import platform
+import serial
 
 ERROR_NO_DATA_VAL = -10
 
@@ -42,6 +44,36 @@ class Cms50ewSource(InboundSource):
             # while not success and not self.stop_thread:
                 # TODO: auto serial port detection
             port_location = self.config["location"]
+            if port_location == "auto":
+                if platform.system() == 'Windows':
+                    # Dummy
+                    class o():
+                        pass
+                    scanner = o()
+                    scanner.accessible_ports = []
+                    for i in range(0, 10):
+                        port = 'COM%d' % i
+                        try:
+                            s = serial.Serial(port)
+                            scanner.accessible_ports.append(port)
+                            s.close()
+                        except serial.SerialException:
+                            pass
+                elif platform.system() == 'Linux':
+                    scanner = cms50ew.DeviceScan(is_bluetooth=False, serial_glob='/dev/ttyUSB[0-9]')
+                else:
+                    scanner = cms50ew.DeviceScan(is_bluetooth=False)
+                if len(scanner.accessible_ports) > 0:
+                    _logger.info('%s available serial ports found: %s', len(scanner.accessible_ports), scanner.accessible_ports)
+                    port_location = scanner.accessible_ports[0]
+                else:
+                    _logger.error('No available serial port found')
+                    self.no_data('Error/No connected sensor found, '
+                                 'try reconnect or reboot system if persists', 
+                                  finger='N')
+                    time.sleep(3)
+                    continue
+
             try:
                 # It seems success can only be False when bluetooth failed, 
                 # otherwise if serial failed it throws Exception
