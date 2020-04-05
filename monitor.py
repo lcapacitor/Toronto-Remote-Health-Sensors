@@ -9,6 +9,7 @@ import time
 import signal
 import socket
 import uuid
+import platform
 
 _logger = logging.getLogger(__name__)
 
