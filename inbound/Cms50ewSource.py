@@ -71,7 +71,7 @@ class Cms50ewSource(InboundSource):
                     self.no_data('Error/No connected sensor found, '
                                  'try reconnect or reboot system if persists', 
                                   finger='N')
-                    time.sleep(3)
+                    time.sleep(0.5) # This needs to be done quickly before device turns itself off
                     continue
 
             try:
