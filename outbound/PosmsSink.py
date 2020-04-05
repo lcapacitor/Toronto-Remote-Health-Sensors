@@ -38,12 +38,13 @@ class PosmsSink(OutboundSink):
                         else:
                             data[data_key] = que.get()
 
-                r = requests.post(url=self.config["location"], data=data) 
-                _logger.debug('%s', data)
-                if r.status_code == 200:
+                r = requests.post(url=self.config["location"], data=data)
+                if r.status_code == 200: 
+                    _logger.debug('%s', data)
                     _logger.debug('%s', r)
                     _logger.debug('%s', r.content)
                 else:
+                    _logger.warning('%s', data)
                     _logger.warning('%s', r)
                     _logger.warning('%s', r.content)
             except Exception as e:

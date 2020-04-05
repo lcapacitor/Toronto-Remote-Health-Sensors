@@ -29,9 +29,9 @@ def main(argv):
 
     log_config = config.get("log", {})
     logging.basicConfig(level=log_config["level"].upper(), format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch = logging.StreamHandler()
-    ch.setFormatter(formatter)
-    _logger.addHandler(ch)
+    # ch = logging.StreamHandler()
+    # ch.setFormatter(formatter)
+    # _logger.addHandler(ch)
     if "level" in log_config:
         _logger.setLevel(log_config["level"].upper())
     if "file" in log_config: # https://docs.python.org/3/howto/logging-cookbook.html
