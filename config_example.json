@@ -1,0 +1,68 @@
+{
+	"log": {
+		"file": "log.txt",
+		"level": "debug"
+	},
+	"info": {
+		"id": "test",
+		"type": "test",
+		"location": "test"
+	},
+	"inbounds": [
+		{
+			"protocol": "randomgenerator",
+			"location": "COM3",
+			"settings": {
+				"seed": 0,
+				"randomstreams": [
+					{
+						"name": "spo2",
+						"rate": 1
+					},
+					{
+						"name": "hr",
+						"rate": 1
+					},
+					{
+						"name": "status",
+						"rate": 1
+					}
+				]
+			},
+			"tag": "Local Random Data Generator"
+		},
+		{
+			"protocol": "serial-cms50ew",
+			"location": "COM3",
+			"settings": {},
+			"tag": "ToronTek"
+		}
+	],
+	"outbounds": [
+		{
+			"protocol": "http-post-posms",
+			"location": "http://IP:PORT/ENDPOINT",
+			"settings": {
+				"api_key": "ENTER_API_KEY",
+				"key_map": {
+					"spo2": "O2_VAL",
+					"hr": "HR_VAL",
+					"status": "DEV_MSG"
+				},
+				"rate": 0.5
+			},
+			"tag": "Toronto POSMS"
+		}
+	],
+	"connections": [
+		{
+			"inbound": "ToronTek",
+			"outbound": "Toronto POSMS",
+			"streams": [
+				"spo2",
+				"hr",
+				"status"
+			]
+		}
+	]
+}
