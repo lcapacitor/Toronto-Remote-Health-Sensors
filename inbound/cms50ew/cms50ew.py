@@ -72,7 +72,8 @@ class CMS50EW():
                                      parity = serial.PARITY_NONE,
                                      stopbits = serial.STOPBITS_ONE,
                                      bytesize = serial.EIGHTBITS,
-                                     timeout = 0.1,
+                                     timeout = 5,
+                                     write_timeout = 5,
                                      xonxoff = 1)
             return True
             
