@@ -22,7 +22,7 @@ class PosmsSink(OutboundSink):
                     'API_KEY': self.config["settings"]["api_key"],
                     'DEV_ID': self.device_info.get("id", "unknown_id"), 
                     'DEV_TYPE': self.device_info.get("type", "unknown_type"),
-                    'DEV_MSG': 'Unset',
+                    'DEV_MSG': 'Error/Status unavailable',
                     'DEV_LOC': self.device_info.get("location", "unknown_location"),
                     'RECORD_TIME': datetime.datetime.now(),
                     'O2_VAL': ERROR_UNSET,
@@ -38,6 +38,7 @@ class PosmsSink(OutboundSink):
                         else:
                             data[data_key] = que.get()
 
+                data['O2_VAL'] /= 100.0
                 r = requests.post(url=self.config["location"], data=data)
                 if r.status_code == 200: 
                     _logger.debug('%s', data)

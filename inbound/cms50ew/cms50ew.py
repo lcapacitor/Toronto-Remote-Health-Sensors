@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
 
+import logging
+_logger = logging.getLogger(__name__)
+
 import serial
-import bluetooth
+try:
+    import bluetooth
+except ImportError as e:
+    _logger.exception("Bluetooth library not install")
 import glob
 import datetime
-import pygal
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+try:
+    import pygal
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+except ImportError as e:
+    _logger.exception("Missing one or more graphing libraries")
 import csv
 
 class CMS50EW():

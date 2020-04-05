@@ -1,4 +1,5 @@
 import inbound.RandomSource
+import inbound.Cms50ewSource
 import outbound.PosmsSink
 import json
 import sys
@@ -10,7 +11,8 @@ import signal
 _logger = logging.getLogger(__name__)
 
 INBOUND_CLASS_MAP = {
-    'randomgenerator': inbound.RandomSource.RandomSource
+    'randomgenerator': inbound.RandomSource.RandomSource,
+    'serial-cms50ew': inbound.Cms50ewSource.Cms50ewSource
 }
 
 OUTBOUND_CLASS_MAP = {
