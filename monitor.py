@@ -1,6 +1,9 @@
 import inbound.RandomSource
 import inbound.Cms50ewSource
 import outbound.PosmsSink
+import outbound.MqttSink
+import outbound.StdoutSink
+from Connection import Connection
 import json
 import sys
 import argparse
@@ -19,7 +22,9 @@ INBOUND_CLASS_MAP = {
 }
 
 OUTBOUND_CLASS_MAP = {
-    'http-post-posms': outbound.PosmsSink.PosmsSink
+    'http-post-posms': outbound.PosmsSink.PosmsSink,
+    'mqtt': outbound.MqttSink.MqttSink,
+    'stdout': outbound.StdoutSink.StdoutSink
 }
 
 def getserial():
@@ -77,24 +82,34 @@ def main(argv):
         inbound_config["tag"] : 
         INBOUND_CLASS_MAP[inbound_config["protocol"]](inbound_config)
         for inbound_config in config.get("inbounds", [])
+        if inbound_config["active"]
     }
 
     outbound_objs = {
         outbound_config["tag"] : 
         OUTBOUND_CLASS_MAP[outbound_config["protocol"]](outbound_config)
         for outbound_config in config.get("outbounds", [])
+        if outbound_config["active"]
     }
 
     if "connections" not in config or len(config["connections"]) == 0:
         _logger.error("No connection specified in configuration to establish")
         return
-    # TODO: Allow multiple connections
+    # TODO: Allow multiple connections - Validate implementation
+    connections = []
     for connection_config in config["connections"]:
-        inbound_obj = inbound_objs[connection_config["inbound"]]
-        outbound_obj = outbound_objs[connection_config["outbound"]]
-        outbound_obj.inputs = inbound_obj.outputs
-        outbound_obj.device_info = config.get("info", {})
+        sources = [inbound_objs[key] for key in connection_config["inbound"]]
+        sinks = [outbound_objs[key] for key in connection_config["outbound"]]
+        for s in sinks:
+            s.device_info = config.get("info", {})
+        # outbound_obj.inputs = inbound_obj.outputs
+        conn = Connection(connection_config)
+        conn.sources = sources
+        conn.sinks = sinks
+        connections.append(conn)
 
+    for conn in connections:
+        conn.start()
     for key, obj in inbound_objs.items():
         obj.start()
     for key, obj in outbound_objs.items():
@@ -105,12 +120,16 @@ def main(argv):
     def exit_gracefully(signum, frame):
         _logger.warning("Main program terminating...")
         killed[0] = True
+        for conn in connections:
+            conn.stop_thread = True
         for key, obj in inbound_objs.items():
             _logger.warning("Terminating %s", obj)
             obj.stop_thread = True
         for key, obj in outbound_objs.items():
             _logger.warning("Terminating %s", obj)
             obj.stop_thread = True
+        for conn in connections:
+            conn.join()
         for key, obj in inbound_objs.items():
             obj.join()
         for key, obj in outbound_objs.items():

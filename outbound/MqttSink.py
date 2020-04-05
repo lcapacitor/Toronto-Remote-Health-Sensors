@@ -1,6 +1,9 @@
 from .OutboundSink import OutboundSink
 import time
 import paho.mqtt.client as mqtt
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class MqttSink(OutboundSink):
     def __init__(self, config):
@@ -8,27 +11,32 @@ class MqttSink(OutboundSink):
         self.device_info = {}
 
     def run(self):
-        client = mqtt.Client()
-        if self.config["settings"]["tls"]:
-            client.tls_set_context()
-        client.username_pw_set(self.config["settings"]["username"], 
-                               self.config["settings"]["password"])
-        client.connect(self.config["location"], 
-                       self.config["settings"]["port"], 60)
+        while not self.stop_thread:
+            client = mqtt.Client()
+            try:
+                if self.config["settings"]["tls"]:
+                    client.tls_set_context()
+                client.username_pw_set(self.config["settings"]["username"], 
+                                       self.config["settings"]["password"])
+                client.connect(self.config["location"], 
+                               self.config["settings"]["port"], 60)
 
-        while not self.stop_thread:             
-            for key, que in self.inputs.items():
-                if not que.empty():
-                    while not que.empty():
-                        val = que.get() # Only sent last value in queue
-                    topic = (self.config["settings"]["topic_prefix"] + 
-                             self.device_info.get("id", "unknown") + '/' + 
-                             key)
-                    ret = client.publish(topic, val)
-                    print(topic, val, ret)
-            time.sleep(1)
+                while not self.stop_thread:             
+                    for key, que in self.inputs.items():
+                        if not que.empty():
+                            while not que.empty():
+                                val = que.get() # Only sent last value in queue
+                            topic = (self.config["settings"]["topic_prefix"] + 
+                                     self.device_info.get("id", "unknown") + '/' + 
+                                     key)
+                            ret = client.publish(topic, val)
+                            _logger.debug("Published: %s: %s -> %s", topic, val, ret)
+                    time.sleep(1)
 
-        client.disconnect()
+                client.disconnect()
+            except Exception as e:
+                _logger.exception("MQTT unexpected exception")
+                client.disconnect()
 
 def main():
     from inbound.RandomSource import RandomSource
