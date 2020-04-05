@@ -2,7 +2,6 @@ from .InboundSource import InboundSource
 from queue import Queue
 import time
 import logging
-import random
 from .cms50ew import cms50ew
 import platform
 import serial
