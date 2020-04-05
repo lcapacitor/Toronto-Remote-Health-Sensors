@@ -47,7 +47,7 @@ def main(argv):
 
     if "info" in config:
         if config["info"].get("id", "auto") == "auto":
-            if platform.system() == 'Windows'
+            if platform.system() == 'Windows':
                 config["info"]["id"] = socket.gethostname() + '-' + hex(uuid.getnode()) # This changes everytime Raspberry Pi reboots...
             else:
                 config["info"]["id"] = socket.gethostname() + '-' + getserial()
