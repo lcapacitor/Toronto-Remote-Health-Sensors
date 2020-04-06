@@ -17,10 +17,15 @@ class RandomSource(InboundSource):
     def run(self):
         rng = random.Random(self.config["settings"]["seed"])
 
+        time_start = time.time()
+
         while not self.stop_thread:
             for stream in self.config["settings"]["randomstreams"]:
                 que = self.outputs[stream["name"]]
-                que.put(rng.randint(80,100))
+                if (time.time() - time_start) % 20 > 10:
+                    que.put(rng.randint(80,100))
+                else:
+                    que.put(rng.randint(-10,0))
             time.sleep(0.3) # TODO: Implement variable rate
 
         _logger.warning('RandomSource terminated')
