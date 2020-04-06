@@ -16,6 +16,8 @@ class PosmsSink(OutboundSink):
     def run(self):
         # TODO: Do not update if no data available
         # TODO: Reuse session
+        last_valid_data_time = -999999999
+
         while not self.stop_thread:
             try:
                 data = {
@@ -38,16 +40,22 @@ class PosmsSink(OutboundSink):
                         else:
                             data[data_key] = que.get()
 
-                data['O2_VAL'] /= 100.0
-                r = requests.post(url=self.config["location"], data=data)
-                if r.status_code == 200: 
-                    _logger.debug('%s', data)
-                    _logger.debug('%s', r)
-                    _logger.debug('%s', r.content)
+                if data['O2_VAL'] > 0 and data['HR_VAL'] > 0:
+                    last_valid_data_time = time.time()
+                if (data['O2_VAL'] > 0 and data['HR_VAL'] > 0) or (
+                    time.time() - last_valid_data_time > self.config["settings"].get("suppress_error", 40)):
+                    data['O2_VAL'] /= 100.0
+                    r = requests.post(url=self.config["location"], data=data)
+                    if r.status_code == 200: 
+                        _logger.debug('%s', data)
+                        _logger.debug('%s', r)
+                        _logger.debug('%s', r.content)
+                    else:
+                        _logger.warning('%s', data)
+                        _logger.warning('%s', r)
+                        _logger.warning('%s', r.content)
                 else:
-                    _logger.warning('%s', data)
-                    _logger.warning('%s', r)
-                    _logger.warning('%s', r.content)
+                    _logger.warning('Suprresing error: %s', data)
             except Exception as e:
                 _logger.exception("Error in PosmsSink")
 
