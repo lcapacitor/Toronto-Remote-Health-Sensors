@@ -1,0 +1,31 @@
+2020-04-28 21:14:33,814 - __main__ - INFO - Configuration parsed
+2020-04-28 21:15:15,042 - __main__ - WARNING - Main program terminating...
+2020-04-28 21:15:15,044 - __main__ - WARNING - Terminating <RandomSource(Thread-1, started 13228)>
+2020-04-28 21:15:15,049 - __main__ - WARNING - Terminating <PosmsSink(Thread-2, stopped 13452)>
+2020-04-28 21:15:15,053 - __main__ - WARNING - Terminating <StdoutSink(Thread-3, started 3724)>
+2020-04-28 21:15:15,232 - __main__ - WARNING - Main program terminated
+2020-04-28 21:16:07,367 - __main__ - INFO - Configuration parsed
+2020-04-28 21:16:07,368 - __main__ - ERROR - Main exception: 'Stdout'
+Traceback (most recent call last):
+  File "monitor.py", line 152, in <module>
+    main(sys.argv[1:])
+  File "monitor.py", line 104, in main
+    sinks = [outbound_objs[key] for key in connection_config["outbound"]]
+  File "monitor.py", line 104, in <listcomp>
+    sinks = [outbound_objs[key] for key in connection_config["outbound"]]
+KeyError: 'Stdout'
+2020-04-28 21:16:29,303 - __main__ - INFO - Configuration parsed
+2020-04-28 21:16:39,882 - __main__ - WARNING - Main program terminating...
+2020-04-28 21:16:39,885 - __main__ - WARNING - Terminating <RandomSource(Thread-1, started 13580)>
+2020-04-28 21:16:39,886 - __main__ - WARNING - Terminating <PosmsSink(Thread-2, stopped 14884)>
+2020-04-28 21:16:40,142 - __main__ - WARNING - Main program terminated
+2020-04-28 21:18:22,967 - __main__ - INFO - Configuration parsed
+2020-04-28 21:20:08,536 - __main__ - WARNING - Main program terminating...
+2020-04-28 21:20:08,538 - __main__ - WARNING - Terminating <RandomSource(Thread-1, started 14384)>
+2020-04-28 21:20:08,544 - __main__ - WARNING - Terminating <PosmsSink(Thread-2, started 7960)>
+2020-04-28 21:20:08,549 - __main__ - WARNING - Terminating <StdoutSink(Thread-3, started 13752)>
+2020-04-28 21:20:09,897 - __main__ - WARNING - Main program terminating...
+2020-04-28 21:20:09,901 - __main__ - WARNING - Terminating <RandomSource(Thread-1, stopped 14384)>
+2020-04-28 21:20:09,903 - __main__ - WARNING - Terminating <PosmsSink(Thread-2, started 7960)>
+2020-04-28 21:20:09,905 - __main__ - WARNING - Terminating <StdoutSink(Thread-3, stopped 13752)>
+2020-04-28 21:20:09,907 - __main__ - WARNING - Main program terminated

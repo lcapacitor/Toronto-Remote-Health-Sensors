@@ -1,0 +1,98 @@
+{
+    "log": {
+        "file": "log.txt",
+        "level": "info"
+    },
+    "info": {
+        "id": "auto",
+        "type": "Test",
+        "location": "auto"
+    },
+    "inbounds": [
+        {
+            "protocol": "randomgenerator",
+            "location": "auto",
+            "settings": {
+                "seed": 0,
+                "randomstreams": [
+                    {
+                        "name": "spo2",
+                        "rate": 1
+                    },
+                    {
+                        "name": "hr",
+                        "rate": 1
+                    },
+                    {
+                        "name": "status",
+                        "rate": 1
+                    }
+                ]
+            },
+            "tag": "RNG",
+            "active": true
+        },
+        {
+            "protocol": "serial-cms50ew",
+            "location": "auto",
+            "settings": {},
+            "tag": "ToronTek",
+            "active": false
+        },
+        {
+            "protocol": "serial-masimorad",
+            "location": "auto",
+            "settings": {},
+            "tag": "Masimo",
+            "active": false
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "http-post-posms",
+            "location": "https://<API_ADDRESS>:5000/upload_data",
+            "certificate": "./certs/cert.pem",
+            "settings": {
+                "api_key": "./encrypted/api_key.enc",
+                "key_map": {
+                    "spo2": "O2_VAL",
+                    "hr": "HR_VAL",
+                    "status": "DEV_MSG"
+                },
+                "rate": 0.5
+            },
+            "tag": "Toronto POSMS",
+            "active": true
+        },
+        {
+            "protocol": "mqtt",
+            "location": "<MQTT_address>",
+            "settings": {
+                "port": 99999,
+                "tls": true,
+                "topic_prefix": "<TOPIC_PREFIX>",
+                "username": "<USERNAME>",
+                "password": "<PASSWORD>"
+            },
+            "tag": "MQTT",
+            "active": false
+        },
+        {
+            "protocol": "stdout",
+            "tag": "Stdout",
+            "active": true
+        }
+    ],
+    "connections": [
+        {
+            "inbound": ["RNG"],
+            "outbound": ["Stdout", "Toronto POSMS"],
+            "streams": [
+                "spo2",
+                "hr",
+                "status"
+            ],
+            "rate": 10
+        }
+    ]
+}
